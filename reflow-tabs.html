@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Accessible tabs with a container-query overflow menu</title>
+    <link rel="stylesheet" href="/reflow-tabs.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Reflow Tabs with More Menu</h1>
+
+      <div class="tabs-widget" data-js="tabs">
+        <p class="resize-hint">
+          ↘ Drag the frame's corner to resize it and watch tabs collapse into
+          "More".
+        </p>
+
+        <div class="tabs-container" id="tabsContainer">
+          <div class="tablist-row" id="tablistRow">
+            <ul
+              class="tablist"
+              id="tablist"
+              role="tablist"
+              aria-label="Project sections"
+            >
+              <li class="tab-item" data-tab-id="overview" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-overview"
+                  role="tab"
+                  aria-controls="panel-overview"
+                  aria-selected="true"
+                >
+                  Overview
+                </button>
+              </li>
+              <li class="tab-item" data-tab-id="activity" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-activity"
+                  role="tab"
+                  aria-controls="panel-activity"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Activity
+                </button>
+              </li>
+              <li class="tab-item" data-tab-id="analytics" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-analytics"
+                  role="tab"
+                  aria-controls="panel-analytics"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Analytics
+                </button>
+              </li>
+              <li class="tab-item" data-tab-id="team" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-team"
+                  role="tab"
+                  aria-controls="panel-team"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Team
+                </button>
+              </li>
+              <li class="tab-item" data-tab-id="files" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-files"
+                  role="tab"
+                  aria-controls="panel-files"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Files
+                </button>
+              </li>
+              <li
+                class="tab-item"
+                data-tab-id="integrations"
+                role="presentation"
+              >
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-integrations"
+                  role="tab"
+                  aria-controls="panel-integrations"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Integrations
+                </button>
+              </li>
+              <li class="tab-item" data-tab-id="settings" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-settings"
+                  role="tab"
+                  aria-controls="panel-settings"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Settings
+                </button>
+              </li>
+              <li class="tab-item" data-tab-id="billing" role="presentation">
+                <button
+                  type="button"
+                  class="tab"
+                  id="tab-billing"
+                  role="tab"
+                  aria-controls="panel-billing"
+                  aria-selected="false"
+                  tabindex="-1"
+                >
+                  Billing
+                </button>
+              </li>
+            </ul>
+
+            <!-- Hidden until JS measures overflow via the container query
+                 custom property; there is nothing useful to show here
+                 without JS so it stays hidden rather than falling back. -->
+            <div class="more-wrapper" id="moreWrapper" hidden>
+              <button
+                type="button"
+                class="more-button"
+                id="moreButton"
+                aria-haspopup="true"
+                aria-expanded="false"
+                aria-controls="moreMenu"
+              >
+                More
+                <svg
+                  class="chevron"
+                  viewBox="0 0 12 8"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M1 1l5 5 5-5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <ul
+                class="more-menu"
+                id="moreMenu"
+                role="menu"
+                aria-labelledby="moreButton"
+                hidden
+              ></ul>
+            </div>
+          </div>
+
+          <p class="status" id="tabsStatus" aria-live="polite"></p>
+
+          <div
+            id="panel-overview"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-overview"
+            tabindex="0"
+          >
+            <h2>Overview</h2>
+            <p>
+              This section summarizes the project's current state at a
+              glance: overall health, the milestones coming up next, and
+              anything that needs attention before the next release window.
+              Treat it as the first stop for anyone joining the project
+              partway through, since every other tab drills into one slice of
+              what's outlined here.
+            </p>
+            <p>
+              Updates roll in from the team's day-to-day work across
+              activity, analytics, and files, so this overview is
+              regenerated automatically rather than maintained by hand. If
+              something here looks stale, check the Activity tab for the
+              most recent raw events.
+            </p>
+            <p><a href="#">Overview example link</a></p>
+          </div>
+          <div
+            id="panel-activity"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-activity"
+            tabindex="0"
+            hidden
+          >
+            <h2>Activity</h2>
+            <p>
+              A running log of what's changed recently: commits, comments,
+              status updates, and anything else the team has touched.
+              Entries are grouped by day and sorted newest first, so the
+              most relevant context always surfaces at the top without
+              needing to scroll.
+            </p>
+            <p>
+              Filtering by person or by section is available from the
+              toolbar above the feed (not shown in this demo). Older
+              entries are paginated rather than infinitely loaded, which
+              keeps the panel's height predictable even on projects with a
+              long history.
+            </p>
+          </div>
+          <div
+            id="panel-analytics"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-analytics"
+            tabindex="0"
+            hidden
+          >
+            <h2>Analytics</h2>
+            <p>
+              Traffic, engagement, and conversion trends for the project,
+              broken down by week and by source. The charts here favor
+              trend lines over raw totals, since the day-to-day noise
+              matters less than whether a metric is moving in the right
+              direction over time.
+            </p>
+            <p>
+              Export options include CSV and a shareable snapshot link, so
+              numbers can be pulled into an external report without giving
+              someone full access to this dashboard. Historical data
+              further back than 12 months is archived separately.
+            </p>
+            <p><a href="#">Analytics example link</a></p>
+          </div>
+          <div
+            id="panel-team"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-team"
+            tabindex="0"
+            hidden
+          >
+            <h2>Team</h2>
+            <p>
+              Everyone with access to this project, along with their role
+              and how recently they've been active. Owners can adjust
+              permissions directly from this list; everyone else can see
+              roles but not change them.
+            </p>
+            <p>
+              Pending invitations show up here too, greyed out until
+              they're accepted. Removing someone from the team revokes
+              their access immediately but leaves their past contributions
+              (commits, comments, uploaded files) attributed to them.
+            </p>
+          </div>
+          <div
+            id="panel-files"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-files"
+            tabindex="0"
+            hidden
+          >
+            <h2>Files</h2>
+            <p>
+              Shared documents, exports, and uploaded assets for the
+              project, organized into folders that mirror the project's
+              own structure. Anyone on the team can upload; deleting a file
+              moves it to a recoverable trash for 30 days before it's
+              permanently removed.
+            </p>
+            <p>
+              Large files are versioned automatically, so overwriting a
+              document doesn't lose the previous copy. Search covers file
+              names and, for common document types, the text inside them.
+            </p>
+            <p><a href="#">Files example link</a></p>
+          </div>
+          <div
+            id="panel-integrations"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-integrations"
+            tabindex="0"
+            hidden
+          >
+            <h2>Integrations</h2>
+            <p>
+              Connections between this project and outside tools: chat
+              notifications, issue trackers, deployment pipelines, and
+              anything else that needs to react to changes here. Each
+              integration can be scoped to specific event types instead of
+              firing on everything.
+            </p>
+            <p>
+              Disconnecting an integration stops new events immediately but
+              doesn't undo anything it already triggered. Some
+              integrations require re-authorizing periodically depending on
+              the third party's own token expiry policy.
+            </p>
+          </div>
+          <div
+            id="panel-settings"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-settings"
+            tabindex="0"
+            hidden
+          >
+            <h2>Settings</h2>
+            <p>
+              Project-level configuration: name, visibility, default
+              branch or workspace, and the notification preferences that
+              apply to everyone unless they override them individually.
+              Changes here take effect immediately for all members.
+            </p>
+            <p>
+              Dangerous actions -- archiving, transferring ownership, or
+              deleting the project outright -- live in a separate section
+              further down and require typing the project name to confirm,
+              to make them harder to trigger by accident.
+            </p>
+          </div>
+          <div
+            id="panel-billing"
+            class="panel"
+            role="tabpanel"
+            aria-labelledby="tab-billing"
+            tabindex="0"
+            hidden
+          >
+            <h2>Billing</h2>
+            <p>
+              Current plan, seat usage, and the next billing date, along
+              with a history of past invoices available for download.
+              Usage-based charges (storage overages, extra build minutes)
+              are itemized separately from the flat subscription fee.
+            </p>
+            <p>
+              Payment method and billing contact can be updated by anyone
+              with owner access. Downgrading a plan takes effect at the end
+              of the current billing cycle rather than immediately, so
+              there's no prorated refund to account for.
+            </p>
+            <p><a href="#">Billing example link</a></p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="/reflow-tabs.js" defer></script>
+  </body>
+</html>
