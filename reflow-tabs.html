@@ -8,13 +8,23 @@
   </head>
   <body>
     <main>
-      <h1>Reflow Tabs with More Menu</h1>
+      <h1>Accessible tabs with a container-query overflow menu</h1>
 
       <div class="tabs-widget" data-js="tabs">
         <p>
-          ↘ Drag the frame's corner to resize it and watch tabs collapse into
-          "More".
+          <span aria-hidden="true"> ↘ </span>
+          Drag the frame's bottom right corner to resize it and watch tabs
+          collapse into "More".
         </p>
+        <p>Keyboard Shortcuts:</p>
+        <ul class="keyboard-hints">
+          <li><kbd>←</kbd> <kbd>→</kbd> switch tabs</li>
+          <li><kbd>Home</kbd> <kbd>End</kbd> first / last tab</li>
+          <li><kbd>↑</kbd> <kbd>↓</kbd> on More opens the menu</li>
+          <li><kbd>↑</kbd> <kbd>↓</kbd> in the menu move between items</li>
+          <li><kbd>Enter</kbd> choose the focused item</li>
+          <li><kbd>Esc</kbd> close the menu</li>
+        </ul>
 
         <div class="tabs-container" id="tabsContainer">
           <div class="tablist-row" id="tablistRow">

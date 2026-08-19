@@ -37,6 +37,26 @@ main {
   margin-top: 1rem;
 }
 
+.keyboard-hints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin: 0.5rem 0 1rem;
+  padding: 0;
+  list-style: none;
+  font-size: 1rem;
+}
+
+kbd {
+  font-family: var(--mono);
+  font-size: 0.8em;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  box-shadow: 0 1px 0 var(--border);
+}
+
 .tabs-container {
   /* This element is the container-query context: its inline size is what
      the @container rules below respond to, not the viewport. Dragging the
