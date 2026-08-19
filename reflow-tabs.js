@@ -12,14 +12,7 @@
   const moreMenu = document.getElementById("moreMenu");
   const statusEl = document.getElementById("tabsStatus");
 
-  // ---- Read tab data straight from the already-semantic markup -----------
-  // The HTML ships as a finished APG tablist (role="tablist", role="tab"
-  // buttons, role="tabpanel" panels with correct aria-selected/tabindex
-  // defaults). There's no link-list fallback to upgrade from, so this is
-  // just wiring behavior onto existing elements, not building new ones.
-  const staticItems = Array.prototype.slice.call(
-    tablistEl.querySelectorAll(".tab-item"),
-  );
+  const staticItems = Array.from(tablistEl.querySelectorAll(".tab-item"));
 
   const tabsData = staticItems.map(function (li) {
     const id = li.getAttribute("data-tab-id");
@@ -34,20 +27,15 @@
   });
 
   // `order` is the actual left-to-right display order: order[0..visibleCount-1]
-  // are the currently-visible tabs, the rest are in the More menu. It starts
-  // out matching the markup order, and is only ever mutated by
-  // promoteToLastVisibleSlot below -- so a tab's on-screen position never
-  // changes except when it's explicitly (or automatically, see below)
-  // promoted into view, and promoting one tab never reshuffles the others.
+  // are visible, the rest are in the More menu. Only promoteToLastVisibleSlot
+  // (below) ever moves an entry, and it only ever moves the one being promoted.
   const order = tabsData.map(function (t) {
     return t.id;
   });
   let activeId = tabsData[0].id;
 
-  // Reapply the initial selection through the same code path everything
-  // else uses, so there's a single source of truth for what
-  // selected/tabindex/hidden state looks like -- the HTML's own defaults
-  // exist only so the page isn't broken for the instant before this runs.
+  // Run the initial selection through the normal code path rather than
+  // trusting the HTML's hardcoded defaults as a second source of truth.
   setActiveTab(activeId);
 
   function tabById(id) {
@@ -68,10 +56,9 @@
   }
 
   function visibleTabs() {
-    // Read straight from the DOM rather than filtering tabsData, because
-    // recomputeLayout() physically reorders tab-items to keep on-screen
-    // order in sync with `order` -- tabsData's own array order stays fixed
-    // forever and would drift from what's actually rendered.
+    // Read straight from the DOM, not tabsData -- recomputeLayout() physically
+    // reorders tab-items to match `order`, so tabsData's own array order
+    // would drift from what's actually rendered.
     return Array.prototype.slice
       .call(tablistEl.children)
       .filter(function (li) {
@@ -133,21 +120,13 @@
   // ---- Container-query-driven overflow -----------------------------------
   let lastStatusText = "";
 
-  // The visible-tab id sequence that's currently actually applied to the DOM
-  // (order + hidden state + the More menu's contents). recomputeLayout() can
-  // run for reasons that don't change this at all -- a ResizeObserver
-  // notification can arrive again for a size that already settled (it's
-  // allowed to take a couple of frames, and the More dropdown itself
-  // transiently extending past tabsContainer's overflow:auto bounds is one
-  // easy way to trigger an extra round). Diffing against this before
-  // touching the DOM matters for more than avoiding wasted work:
-  // tablistEl.appendChild() unconditionally detaches and reattaches its
-  // argument -- even when it's already the last child -- and Chromium blurs
-  // a focused descendant on that detach regardless of the fact that it's
-  // being put right back. A tab that was just given focus (e.g. via the More
-  // menu) has nothing re-asserting that focus on a bare recomputeLayout()
-  // call, so a redundant call was silently stealing it. Skipping the DOM
-  // work entirely when nothing actually changed avoids that.
+  // The visible-tab id sequence currently applied to the DOM. recomputeLayout()
+  // can run again for a size that hasn't actually changed (ResizeObserver
+  // settling can take a couple of frames), and appendChild() below detaches +
+  // reattaches every visible tab even when it's already in place -- which
+  // blurs a tab that was just focused (e.g. via a More-menu selection), with
+  // nothing to refocus it. Skipping the DOM work when nothing changed avoids
+  // that.
   let lastVisibleIds = null;
 
   function idsEqual(a, b) {
@@ -165,11 +144,9 @@
       : tabsData.length;
   }
 
-  // Ensures `id` is within the first `visibleCount` entries of `order`. If
-  // it already is, nothing changes -- no jumping for anyone. If it isn't,
-  // it's moved to the last visible slot (index visibleCount - 1), which
-  // bumps whatever tab was previously in that slot out to the front of the
-  // overflow menu. Every other visible tab keeps its exact position.
+  // Moves `id` into the last visible slot if it isn't already visible,
+  // bumping whatever tab was there into the menu. Every other visible tab
+  // keeps its position.
   function promoteToLastVisibleSlot(id, visibleCount) {
     const idx = order.indexOf(id);
     if (idx === -1 || idx < visibleCount) return;
@@ -181,22 +158,17 @@
   function recomputeLayout() {
     const visibleCount = getVisibleCount();
 
-    // Whatever tab is currently active must never end up hidden -- e.g. if
-    // the container shrinks past the point where it would naturally still
-    // fit. It gets the same "takes the last visible slot" treatment as an
-    // explicit menu selection, so this also covers the case where a plain
-    // click/arrow-key selection later gets squeezed out by a resize.
+    // The active tab must never end up hidden -- e.g. if a resize squeezes
+    // it out -- so it gets promoted just like an explicit menu selection.
     promoteToLastVisibleSlot(activeId, visibleCount);
 
     const visibleIds = order.slice(0, visibleCount);
 
-    // Bail out before touching the DOM at all if this is a redundant call --
-    // see lastVisibleIds above for why that's not just an optimization.
+    // Skip the DOM work entirely if nothing changed -- see lastVisibleIds above.
     if (idsEqual(visibleIds, lastVisibleIds)) return;
     lastVisibleIds = visibleIds;
 
-    // Physically move each visible tab-item into `order`'s sequence so the
-    // rendered left-to-right order always matches it exactly.
+    // Reorder tab-items in the DOM to match `order`.
     visibleIds.forEach(function (id) {
       tablistEl.appendChild(tabById(id).itemEl);
     });
@@ -210,8 +182,8 @@
       t.itemEl.hidden = !visibleSet[t.id];
     });
 
-    // Menu items are listed in original tab order (not `order`'s working
-    // sequence) so the menu itself stays predictable and scannable.
+    // List menu items in original tab order (not `order`) so the menu stays
+    // predictable.
     const overflow = tabsData.filter(function (t) {
       return !visibleSet[t.id];
     });
@@ -391,15 +363,11 @@
     chooseFromMenu(item.getAttribute("data-tab-id"));
   });
 
-  // Selecting a menu item makes it the active tab. recomputeLayout() then
-  // guarantees the active tab a visible slot -- since this one just came
-  // from overflow, that means it lands exactly in the last visible slot,
-  // bumping whichever tab was there into the menu instead.
+  // Selecting a menu item makes it active; recomputeLayout() then promotes
+  // it into the last visible slot, bumping another tab into the menu.
   function chooseFromMenu(id) {
-    // Close first, before recomputeLayout() rebuilds the menu's DOM
-    // (including replacing the very item that was just clicked/activated).
-    // Closing first means that rebuild happens on an already-hidden menu
-    // instead of visibly flashing while the event is still dispatching.
+    // Close first so recomputeLayout()'s menu rebuild happens on an already-
+    // hidden menu instead of flashing the item that was just clicked.
     closeMenu({ restoreFocus: false });
     setActiveTab(id);
     recomputeLayout();
