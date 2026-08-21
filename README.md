@@ -55,7 +55,7 @@ A `max-width` rule stays in effect down to the next rule's threshold, not just a
 
 A more precise approach: cache each tab's rendered width once (labels are static), then have `recomputeLayout()` sum real widths to compute the exact number of tabs that fit for the current combination. Not implemented here:
 
-- Real-width fitting reruns on more triggers (resize, zoom, font-size changes) than a coarse CSS breakpoint read, running the DOM-reordering path in `recomputeLayout()` more often — the same path where a redundant run was found to steal focus from a just-selected tab (see below).
+- Real-width fitting reruns on more triggers (resize, zoom, font-size changes) than a coarse CSS breakpoint read, running the DOM-reordering path in `recomputeLayout()` more often — the same path where a redundant run was found to steal focus from a just-selected tab.
 - The `aria-live` status line currently changes at a few coarse steps. Pixel-accurate fitting recalculates on every resize tick, which would announce every intermediate count during a drag-resize without added debouncing.
 - `hidden` sets `display: none`, and elements with `display: none` measure as zero width, so widths must be cached before anything is hidden, not measured live off overflowed tabs.
 
