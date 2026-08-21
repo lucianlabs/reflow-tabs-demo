@@ -45,11 +45,17 @@
   // ---- Activation (APG Tabs: automatic activation) -----------------------
   function setActiveTab(id) {
     activeId = id;
+    // Reveal the new panel before hiding the old one. Both stay visible for
+    // one overlapping instant instead of neither -- if the old one were
+    // hidden first, the panel area would briefly have zero height, and
+    // browsers can react to that transient collapse by clamping the page's
+    // scroll position, then snapping it back once the new panel appears.
+    tabById(id).panelEl.hidden = false;
     tabsData.forEach((t) => {
       const selected = t.id === id;
       t.tabEl.setAttribute("aria-selected", String(selected));
       t.tabEl.tabIndex = selected ? 0 : -1;
-      t.panelEl.hidden = !selected;
+      if (!selected) t.panelEl.hidden = true;
     });
   }
 

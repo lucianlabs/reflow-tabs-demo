@@ -101,33 +101,42 @@ kbd {
    Written widest -> narrowest so the narrowest matching rule wins the
    cascade. Thresholds are tuned to this demo's specific tab labels; a
    production version could pair this with ResizeObserver pixel
-   measurement for pixel-perfect fitting instead of fixed steps. */
-@container tabs (max-width: 760px) {
+   measurement for pixel-perfect fitting instead of fixed steps.
+
+   Each number is offset ~52px below the "round" value it targets, because
+   a container query measures .tabs-container's own content-box: its
+   horizontal padding (~35px) and its reserved scrollbar-gutter (~17px)
+   are both excluded from what gets compared here, even though neither
+   one takes any width away from the tabs themselves. Without that
+   offset, .tabs-container's natural resting width (with no resize at
+   all) already measures just under 760px, so the first breakpoint would
+   fire and silently overflow two tabs into the More menu by default. */
+@container tabs (max-width: 705px) {
   .tablist-row {
     --visible-count: 6;
   }
 }
-@container tabs (max-width: 640px) {
+@container tabs (max-width: 585px) {
   .tablist-row {
     --visible-count: 5;
   }
 }
-@container tabs (max-width: 530px) {
+@container tabs (max-width: 475px) {
   .tablist-row {
     --visible-count: 4;
   }
 }
-@container tabs (max-width: 430px) {
+@container tabs (max-width: 375px) {
   .tablist-row {
     --visible-count: 3;
   }
 }
-@container tabs (max-width: 340px) {
+@container tabs (max-width: 285px) {
   .tablist-row {
     --visible-count: 2;
   }
 }
-@container tabs (max-width: 270px) {
+@container tabs (max-width: 215px) {
   .tablist-row {
     --visible-count: 1;
   }
@@ -265,7 +274,6 @@ button.tab[aria-selected="true"]::after {
 }
 .more-menu button[role="menuitem"]:hover {
   background: var(--accent-soft);
-  color: var(--accent);
 }
 .more-menu button[role="menuitem"]:focus-visible {
   outline-offset: 1px;
