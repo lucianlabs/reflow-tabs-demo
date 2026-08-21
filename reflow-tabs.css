@@ -58,27 +58,22 @@ kbd {
 }
 
 .tabs-container {
-  /* This element is the container-query context: its inline size is what
-     the @container rules below respond to, not the viewport. Dragging the
-     resize handle (bottom-right corner) proves the tabs react to the
-     CONTAINER, so this same component would behave correctly if it were
-     dropped into a narrow sidebar on a wide screen. */
+  /* Container-query context for the @container rules below; queries
+     respond to this element's inline size, not the viewport. */
   container-type: inline-size;
   container-name: tabs;
 
   resize: horizontal;
   overflow: auto;
-  /* Reserves the scrollbar's space permanently so a scrollbar appearing
-     (e.g. the More dropdown momentarily extending past this element's
-     bottom edge while open) never changes the measured content-box
-     inline-size. That inline-size change is what the ResizeObserver in
-     reflow-tabs.js watches for, so without this a scrollbar toggling on
-     open would trigger a spurious recompute. Unsupported browsers just
-     keep the old auto-gutter behavior -- recomputeLayout()'s visible-id
-     comparison already guards against that case regardless. */
+  /* Reserves scrollbar space so a scrollbar appearing (e.g. the More menu
+     extending past this element's bottom edge) doesn't change the
+     measured content-box inline-size and trigger a spurious ResizeObserver
+     recompute. Without support, recomputeLayout()'s visible-id comparison
+     still guards against the same case. */
   scrollbar-gutter: stable;
   width: 100%;
-  min-width: 230px;
+  /* Floor required by the worst-case single-tab breakpoint below. */
+  min-width: 255px;
   max-width: 100%;
 
   background: var(--card);
@@ -91,52 +86,71 @@ kbd {
   align-items: stretch;
   gap: 0.4rem;
   border-bottom: 1px solid var(--border);
-  /* Fallback/default: all tabs visible when no @container rule matches
-     (wide container). JS reads this custom property to know how many tabs
-     currently fit. */
+  /* Default when no @container rule matches: all tabs visible. JS reads
+     this property to determine how many tabs fit. */
   --visible-count: 8;
 }
 
 /* ---------- Container query breakpoints ----------
-   Written widest -> narrowest so the narrowest matching rule wins the
-   cascade. Thresholds are tuned to this demo's specific tab labels; a
-   production version could pair this with ResizeObserver pixel
-   measurement for pixel-perfect fitting instead of fixed steps.
+   Widest -> narrowest; the narrowest matching rule wins the cascade.
 
-   Each number is offset ~52px below the "round" value it targets, because
-   a container query measures .tabs-container's own content-box: its
-   horizontal padding (~35px) and its reserved scrollbar-gutter (~17px)
-   are both excluded from what gets compared here, even though neither
-   one takes any width away from the tabs themselves. Without that
-   offset, .tabs-container's natural resting width (with no resize at
-   all) already measures just under 760px, so the first breakpoint would
-   fire and silently overflow two tabs into the More menu by default. */
-@container tabs (max-width: 705px) {
+   A container query only measures .tabs-container's pixel width, not the
+   width of the specific tabs currently shown -- and the visible set
+   changes at runtime (selecting an overflowed tab from the More menu
+   promotes it into the last visible slot, displacing another tab).
+   Thresholds tuned to the default tab order's width would fit only that
+   combination and wrap for any wider combination.
+
+   Each threshold is instead sized for the worst case: the N widest tab
+   labels of all 8, not whichever N happen to be first. No combination of
+   N visible tabs is ever wider than the N widest tabs overall, so this
+   guarantees N tabs fit regardless of which N are shown. Cost: the
+   container may show one fewer tab than the current combination could
+   actually fit.
+
+   Each value is the sum of the N widest tab widths + the gaps between
+   them + the gap before the More button + the More button's own width,
+   measured from the rendered demo and rounded up. (integrations 112 /
+   overview 95 / analytics 90 / settings 84 / activity 79 / billing 70 /
+   team 64 / files 58, tab gap 4, row gap 6.4, More button 77.) There is
+   no --visible-count: 7 tier: 7 of the widest tabs plus the More button
+   need more room than all 8 tabs need with no button, so that tier is
+   unreachable.
+
+   A max-width rule stays in effect down to the next rule's threshold,
+   not just at its own boundary, so each rule's max-width is the
+   requirement for the next tier UP, not its own -- the value on
+   --visible-count: 6 is what 6 of the widest tabs need, and marks the
+   point where 8 tabs stop fitting. .tabs-container's min-width above
+   covers the narrowest tier the same way, for its own worst case (a
+   lone "Integrations" tab + the More button), since there's no narrower
+   rule to hand off to. */
+@container tabs (max-width: 688px) {
   .tablist-row {
     --visible-count: 6;
   }
 }
-@container tabs (max-width: 585px) {
+@container tabs (max-width: 640px) {
   .tablist-row {
     --visible-count: 5;
   }
 }
-@container tabs (max-width: 475px) {
+@container tabs (max-width: 566px) {
   .tablist-row {
     --visible-count: 4;
   }
 }
-@container tabs (max-width: 375px) {
+@container tabs (max-width: 484px) {
   .tablist-row {
     --visible-count: 3;
   }
 }
-@container tabs (max-width: 285px) {
+@container tabs (max-width: 396px) {
   .tablist-row {
     --visible-count: 2;
   }
 }
-@container tabs (max-width: 215px) {
+@container tabs (max-width: 302px) {
   .tablist-row {
     --visible-count: 1;
   }
@@ -145,9 +159,8 @@ kbd {
 .tablist {
   list-style: none;
   display: flex;
-  /* Safety net for the instant before JS's first recomputeLayout() runs;
-     JS then hides true overflow items outright rather than relying on
-     wrapping. */
+  /* Fallback before JS's first recomputeLayout() runs; JS then hides
+     overflow items instead of relying on wrapping. */
   flex-wrap: wrap;
   gap: 0.25rem;
   margin: 0;
