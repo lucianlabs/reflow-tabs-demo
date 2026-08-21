@@ -15,6 +15,8 @@
   const moreButton = document.getElementById("moreButton");
   const moreMenu = document.getElementById("moreMenu");
   const statusEl = document.getElementById("tabsStatus");
+  const widthSlider = document.getElementById("widthSlider");
+  const widthOutput = document.getElementById("widthOutput");
 
   const staticItems = Array.from(tablistEl.querySelectorAll(".tab-item"));
 
@@ -218,11 +220,28 @@
     });
   }
 
-  const ro = new ResizeObserver(() =>
-    window.requestAnimationFrame(recomputeLayout),
-  );
+  // Keyboard-operable alternative to dragging the CSS resize handle: the
+  // slider sets container.style.width directly, the same property the
+  // browser's own resize-handle drag sets, so it drives recomputeLayout()
+  // through the same ResizeObserver path below rather than a separate one.
+  function syncWidthSlider() {
+    const width = Math.round(container.getBoundingClientRect().width);
+    widthSlider.value = String(width);
+    widthOutput.textContent = width + "px";
+  }
+
+  widthSlider.addEventListener("input", () => {
+    container.style.width = widthSlider.value + "px";
+    widthOutput.textContent = widthSlider.value + "px";
+  });
+
+  const ro = new ResizeObserver(() => {
+    window.requestAnimationFrame(recomputeLayout);
+    syncWidthSlider();
+  });
   ro.observe(container);
   recomputeLayout();
+  syncWidthSlider();
 
   // ---- More menu: APG Menu Button pattern --------------------------------
 

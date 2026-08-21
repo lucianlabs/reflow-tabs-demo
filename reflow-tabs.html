@@ -13,8 +13,8 @@
       <div class="tabs-widget" data-js="tabs">
         <p>
           <span aria-hidden="true"> ↘ </span>
-          Drag the frame's bottom right corner to resize it and watch tabs
-          collapse into "More".
+          Drag the frame's bottom right corner, or use the width slider
+          below, to resize it and watch tabs collapse into "More".
         </p>
         <p>Keyboard Shortcuts:</p>
         <ul class="keyboard-hints">
@@ -25,6 +25,16 @@
           <li><kbd>Enter</kbd> choose the focused item</li>
           <li><kbd>Esc</kbd> close the menu</li>
         </ul>
+
+        <div class="resize-slider">
+          <label for="widthSlider">Container width</label>
+          <!-- min mirrors .tabs-container's CSS min-width; max is a round
+               value comfortably above its natural resting width. Actual
+               rendered width still obeys the CSS min-width/max-width:100%
+               bounds regardless of what this is set to. -->
+          <input type="range" id="widthSlider" min="255" max="900" step="1" />
+          <output for="widthSlider" id="widthOutput"></output>
+        </div>
 
         <div class="tabs-container" id="tabsContainer">
           <div class="tablist-row" id="tablistRow">

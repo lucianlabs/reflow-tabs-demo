@@ -57,6 +57,24 @@ kbd {
   box-shadow: 0 1px 0 var(--border);
 }
 
+.resize-slider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.5rem 0 1rem;
+  font-size: 0.9rem;
+}
+.resize-slider input[type="range"] {
+  flex: 1 1 auto;
+  max-width: 320px;
+}
+.resize-slider output {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  min-width: 4.5ch;
+  text-align: right;
+}
+
 .tabs-container {
   /* Container-query context for the @container rules below; queries
      respond to this element's inline size, not the viewport. */
