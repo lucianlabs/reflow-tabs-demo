@@ -30,12 +30,12 @@ This demo takes the structurally-conforming route rather than the confusing one:
 .tablist-row {
   --visible-count: 8; /* default: everything fits */
 }
-@container tabs (max-width: 705px) {
+@container tabs (max-width: 688px) {
   .tablist-row {
     --visible-count: 6;
   }
 }
-@container tabs (max-width: 585px) {
+@container tabs (max-width: 640px) {
   .tablist-row {
     --visible-count: 5;
   }
@@ -43,9 +43,25 @@ This demo takes the structurally-conforming route rather than the confusing one:
 /* …down to --visible-count: 1 at the narrowest breakpoint */
 ```
 
-The breakpoint numbers are deliberately offset below round values (705px rather than 760px, and so on). A container query measures `.tabs-container`'s own content-box, which excludes its horizontal padding and its reserved scrollbar-gutter space — about 52px combined here — even though neither one takes width away from the tabs themselves. Without that offset, the container's normal resting width (with no resize at all) already measures just under the first breakpoint, so tabs would silently overflow into the menu by default.
+A container query only ever sees `.tabs-container`'s own pixel width — it has no way to know how wide the *specific* tabs currently in view actually are, and which tabs are visible isn't fixed: picking an overflowed tab from the More menu promotes it into the last visible slot, bumping whatever was there into the menu instead. Tuning each threshold against the default tab order's width would fit that one combination and then wrap onto a second line the moment a wider-labeled combination ends up visible instead — which is exactly the failure this component exists to avoid.
+
+So instead, every threshold is sized for the worst case: assuming the *N widest tab labels of all 8* are the ones showing, not just whichever N happen to be first. That's a real, if pessimistic, upper bound — no actual combination of N visible tabs can ever be wider than the N widest tabs overall, so sizing against it guarantees N tabs always fit, regardless of which N they turn out to be. The trade-off, chosen deliberately over a JS pixel-measurement rewrite (see [Why not measure real widths in JS instead?](#why-not-measure-real-widths-in-js-instead) below), is that a container sometimes shows one fewer tab than the *current* combination could technically fit, in exchange for a guarantee that nothing ever wraps.
+
+There's a second, less obvious wrinkle: a `max-width` rule stays in effect all the way down to the *next* rule's threshold, not just at its own boundary — so `--visible-count: 6`'s safety has to hold across that entire span, right down to where `--visible-count: 5` takes over. The only width that actually guarantees that lower edge is safe is the width the *5*-tab worst case needs, because below that point 5 has already taken over. So each rule's `max-width` is keyed to the *next tier up's* requirement, not its own — the `688px` above is what all 6 of the widest tab labels plus the More button need, and it's written on the rule that hands off from 8 tabs to 6. `.tabs-container`'s `min-width: 255px` closes the last gap: the narrowest tier has no smaller rule to hand off to, so the container simply isn't allowed to shrink past the point where even its own worst case (a lone "Integrations" tab + the More button) stops fitting.
 
 Doing the size-to-tab-count mapping in CSS, rather than in JavaScript, means the thresholds live next to the styles they affect and the mapping updates synchronously with layout — no JS measurement pass has to run before the browser knows how many tabs currently fit.
+
+#### Why not measure real widths in JS instead?
+
+The precise fix would be to drop the worst-case guesswork entirely: cache every tab's real rendered width once (labels are static, so a one-time measurement is enough), then have `recomputeLayout()` sum real widths — not label-agnostic tiers — to compute the exact number of tabs that fit for whatever combination is currently visible. That's strictly more accurate, and it's what a production version of this pattern should probably do.
+
+It was deliberately not done here, because the added precision comes back around and lands on the exact things this demo is supposed to model carefully:
+
+- **More frequent recomputation, more chances to regress focus handling.** Real-width fitting has to rerun on more triggers (resize, zoom, font-size changes) than a coarse CSS breakpoint read, which means the DOM-reordering path in `recomputeLayout()` runs more often — precisely the path where a redundant run was already found to silently steal focus from a just-selected tab (see the reflow calculation below). Each additional trigger is another chance to reopen that bug.
+- **Noisier screen reader announcements.** The `aria-live` status line currently only changes at a handful of coarse, discrete steps. Pixel-accurate fitting recalculates on every resize tick, so without deliberate debouncing a screen reader user dragging the resize handle would hear a rapid "Showing 5 of 8… Showing 4 of 8… Showing 5 of 8…" instead of a few meaningful updates.
+- **A measurement-ordering trap.** `hidden` sets `display: none`, and elements with `display: none` measure as zero width — so widths have to be cached *before* anything is ever hidden, not measured live off the currently-overflowed tabs. Getting that ordering wrong doesn't fail loudly; it just silently breaks the fit calculation.
+
+None of these are unsolvable, but they're real complexity added to the two areas — focus management and AT announcements — that took the most careful work to get right elsewhere in this demo. For a reference implementation of one accessibility pattern, the CSS-only worst-case approach's cost (occasionally showing one fewer tab than the current combination could technically fit) was judged cheaper than reopening that surface.
 
 ### Reacting to size changes: `ResizeObserver`
 

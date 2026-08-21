@@ -78,7 +78,9 @@ kbd {
      comparison already guards against that case regardless. */
   scrollbar-gutter: stable;
   width: 100%;
-  min-width: 230px;
+  /* Floor for the worst-case single-tab breakpoint below -- see that
+     comment for how this number was derived. */
+  min-width: 255px;
   max-width: 100%;
 
   background: var(--card);
@@ -99,44 +101,77 @@ kbd {
 
 /* ---------- Container query breakpoints ----------
    Written widest -> narrowest so the narrowest matching rule wins the
-   cascade. Thresholds are tuned to this demo's specific tab labels; a
-   production version could pair this with ResizeObserver pixel
-   measurement for pixel-perfect fitting instead of fixed steps.
+   cascade. A container query only knows .tabs-container's own pixel
+   width -- it can't see how wide the specific tabs currently in view
+   actually are, and which tabs are visible changes at runtime (picking
+   an overflowed tab from the More menu promotes it into the last visible
+   slot, bumping something else out). Tuning each threshold against the
+   default tab order's width would fit *that* combination, then wrap onto
+   a second line for any width where a wider-labeled combination ends up
+   visible instead -- which is exactly the failure this component exists
+   to avoid.
 
-   Each number is offset ~52px below the "round" value it targets, because
-   a container query measures .tabs-container's own content-box: its
-   horizontal padding (~35px) and its reserved scrollbar-gutter (~17px)
-   are both excluded from what gets compared here, even though neither
-   one takes any width away from the tabs themselves. Without that
-   offset, .tabs-container's natural resting width (with no resize at
-   all) already measures just under 760px, so the first breakpoint would
-   fire and silently overflow two tabs into the More menu by default. */
-@container tabs (max-width: 705px) {
+   So instead each threshold is sized for the worst case: assuming the N
+   widest tab labels of all 8 are the ones showing, not just whichever N
+   happen to be first. That's a real, if pessimistic, upper bound -- any
+   actual combination of N visible tabs is never wider than the N widest
+   tabs overall, so sizing against it guarantees N tabs always fit,
+   regardless of which N they turn out to be. The trade-off is exactly
+   the one that was chosen deliberately over a JS pixel-measurement
+   rewrite: a container may show one fewer tab than the *current*
+   combination could actually fit, in exchange for a guarantee that
+   nothing ever wraps.
+
+   Each number is the sum of the N widest tab widths + the gaps between
+   them + the gap before the More button + the More button's own width,
+   all measured from the rendered demo, rounded up for safety margin.
+   (integrations 112 / overview 95 / analytics 90 / settings 84 /
+   activity 79 / billing 70 / team 64 / files 58, tab gap 4, row gap
+   6.4, More button 77.) There's deliberately no --visible-count: 7 tier:
+   7 of the widest tabs plus the More button needs more room than all 8
+   tabs need with no button at all, so that tier can never be reachable
+   between the "6" and "8" thresholds -- 6 is the widest count that ever
+   makes sense to show alongside the button.
+
+   Each rule's max-width is NOT the requirement for the count it assigns
+   -- it's the requirement for the count ONE TIER WIDER. A max-width
+   rule stays in effect all the way down to the next rule's threshold,
+   not just at the exact boundary, so "--visible-count: 6" here has to
+   stay safe for 6 tabs across that entire span, all the way down to
+   where "--visible-count: 5" takes over. The only number that actually
+   guarantees that is the width the *5*-tab worst case needs -- once the
+   container gets any narrower than that, 5 has already taken over. So
+   each threshold below is keyed to the next-larger tab count's
+   requirement, not its own. The narrowest tier's worst case (a lone
+   "Integrations" tab + the More button) is, by the same logic, what
+   .tabs-container's min-width above is sized to guarantee fits, since
+   there's no narrower rule below it to hand off to. */
+@container tabs (max-width: 688px) {
   .tablist-row {
     --visible-count: 6;
   }
 }
-@container tabs (max-width: 585px) {
+@container tabs (max-width: 640px) {
   .tablist-row {
     --visible-count: 5;
   }
 }
-@container tabs (max-width: 475px) {
+@container tabs (max-width: 566px) {
   .tablist-row {
     --visible-count: 4;
   }
 }
-@container tabs (max-width: 375px) {
+@container tabs (max-width: 484px) {
   .tablist-row {
     --visible-count: 3;
   }
 }
-@container tabs (max-width: 285px) {
+@container tabs (max-width: 396px) {
   .tablist-row {
     --visible-count: 2;
   }
 }
-@container tabs (max-width: 215px) {
+@container tabs (max-width: 302px) {
   .tablist-row {
     --visible-count: 1;
   }
