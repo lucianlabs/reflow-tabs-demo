@@ -230,10 +230,28 @@
     widthOutput.textContent = width + "px";
   }
 
+  // The HTML's min/max attributes are placeholders for the instant before
+  // this runs. min-width is a fixed px value in the CSS, so it's read
+  // directly. max-width: 100% is relative to the parent, so the real
+  // ceiling is the parent's content-box width -- which itself shifts with
+  // the browser window, not just this container's own resize. A hardcoded
+  // max would let the slider request widths the CSS never grants: the box
+  // stops growing, ResizeObserver stops firing (nothing about its size is
+  // changing anymore), and the slider is left showing a value that doesn't
+  // match what's rendered.
+  function updateWidthSliderBounds() {
+    // min/max attributes on a range input must be bare numbers -- CSS
+    // computed values come back with a "px" unit, so it has to be stripped.
+    widthSlider.min = String(parseFloat(getComputedStyle(container).minWidth));
+    widthSlider.max = String(Math.round(container.parentElement.clientWidth));
+  }
+
   widthSlider.addEventListener("input", () => {
     container.style.width = widthSlider.value + "px";
     widthOutput.textContent = widthSlider.value + "px";
   });
+
+  window.addEventListener("resize", updateWidthSliderBounds);
 
   const ro = new ResizeObserver(() => {
     window.requestAnimationFrame(recomputeLayout);
@@ -241,6 +259,7 @@
   });
   ro.observe(container);
   recomputeLayout();
+  updateWidthSliderBounds();
   syncWidthSlider();
 
   // ---- More menu: APG Menu Button pattern --------------------------------

@@ -28,11 +28,10 @@
 
         <div class="resize-slider">
           <label for="widthSlider">Container width</label>
-          <!-- min mirrors .tabs-container's CSS min-width; max is a round
-               value comfortably above its natural resting width. Actual
-               rendered width still obeys the CSS min-width/max-width:100%
-               bounds regardless of what this is set to. -->
-          <input type="range" id="widthSlider" min="255" max="900" step="1" />
+          <!-- Placeholder bounds for the instant before JS runs; JS
+               overwrites both with the real computed min-width and the
+               parent's actual content width once it loads. -->
+          <input type="range" id="widthSlider" min="255" max="812" step="1" />
           <output for="widthSlider" id="widthOutput"></output>
         </div>
 
