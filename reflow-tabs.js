@@ -26,14 +26,14 @@
     };
   });
 
-  // `order` is the actual left-to-right display order: order[0..visibleCount-1]
+  // `order` is the left-to-right display order: order[0..visibleCount-1]
   // are visible, the rest are in the More menu. Only promoteToLastVisibleSlot
-  // (below) ever moves an entry, and it only ever moves the one being promoted.
+  // moves entries, and only the one being promoted.
   const order = tabsData.map((t) => t.id);
   let activeId = tabsData[0].id;
 
-  // Run the initial selection through the normal code path rather than
-  // trusting the HTML's hardcoded defaults as a second source of truth.
+  // Runs the initial selection through the normal code path instead of
+  // trusting the HTML's hardcoded defaults.
   setActiveTab(activeId);
 
   function tabById(id) {
@@ -45,11 +45,11 @@
   // ---- Activation (APG Tabs: automatic activation) -----------------------
   function setActiveTab(id) {
     activeId = id;
-    // Reveal the new panel before hiding the old one. Both stay visible for
-    // one overlapping instant instead of neither -- if the old one were
-    // hidden first, the panel area would briefly have zero height, and
-    // browsers can react to that transient collapse by clamping the page's
-    // scroll position, then snapping it back once the new panel appears.
+    // Reveals the new panel before hiding the old one, so both are visible
+    // for one instant instead of neither. Hiding the old panel first would
+    // briefly collapse the panel area to zero height; browsers can respond
+    // by clamping scroll position, then snapping back once the new panel
+    // appears.
     tabById(id).panelEl.hidden = false;
     tabsData.forEach((t) => {
       const selected = t.id === id;
@@ -60,9 +60,9 @@
   }
 
   function visibleTabs() {
-    // Read straight from the DOM, not tabsData -- recomputeLayout() physically
-    // reorders tab-items to match `order`, so tabsData's own array order
-    // would drift from what's actually rendered.
+    // Reads from the DOM, not tabsData: recomputeLayout() reorders
+    // tab-items to match `order`, so tabsData's array order drifts from
+    // what's rendered.
     return Array.from(tablistEl.children)
       .filter((li) => !li.hidden)
       .map((li) => tabById(li.getAttribute("data-tab-id")));
@@ -115,13 +115,12 @@
   // ---- Container-query-driven overflow -----------------------------------
   let lastStatusText = "";
 
-  // The visible-tab id sequence currently applied to the DOM. recomputeLayout()
-  // can run again for a size that hasn't actually changed (ResizeObserver
-  // settling can take a couple of frames), and appendChild() below detaches +
-  // reattaches every visible tab even when it's already in place -- which
-  // blurs a tab that was just focused (e.g. via a More-menu selection), with
-  // nothing to refocus it. Skipping the DOM work when nothing changed avoids
-  // that.
+  // Visible-tab id sequence currently applied to the DOM. recomputeLayout()
+  // can run again for a size that hasn't changed (ResizeObserver settling
+  // can take a couple of frames). appendChild() below detaches and
+  // reattaches every visible tab even when already in place, which blurs a
+  // tab that was just focused (e.g. via a More-menu selection) with nothing
+  // to refocus it. Skipping DOM work when nothing changed avoids that.
   let lastVisibleIds = null;
 
   function idsEqual(a, b) {
@@ -153,13 +152,13 @@
   function recomputeLayout() {
     const visibleCount = getVisibleCount();
 
-    // The active tab must never end up hidden -- e.g. if a resize squeezes
-    // it out -- so it gets promoted just like an explicit menu selection.
+    // The active tab must never end up hidden. If a resize squeezes it
+    // out, it's promoted the same as an explicit menu selection.
     promoteToLastVisibleSlot(activeId, visibleCount);
 
     const visibleIds = order.slice(0, visibleCount);
 
-    // Skip the DOM work entirely if nothing changed -- see lastVisibleIds above.
+    // Skips DOM work if nothing changed; see lastVisibleIds above.
     if (idsEqual(visibleIds, lastVisibleIds)) return;
     lastVisibleIds = visibleIds;
 

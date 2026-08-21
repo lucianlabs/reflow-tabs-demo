@@ -58,28 +58,21 @@ kbd {
 }
 
 .tabs-container {
-  /* This element is the container-query context: its inline size is what
-     the @container rules below respond to, not the viewport. Dragging the
-     resize handle (bottom-right corner) proves the tabs react to the
-     CONTAINER, so this same component would behave correctly if it were
-     dropped into a narrow sidebar on a wide screen. */
+  /* Container-query context for the @container rules below; queries
+     respond to this element's inline size, not the viewport. */
   container-type: inline-size;
   container-name: tabs;
 
   resize: horizontal;
   overflow: auto;
-  /* Reserves the scrollbar's space permanently so a scrollbar appearing
-     (e.g. the More dropdown momentarily extending past this element's
-     bottom edge while open) never changes the measured content-box
-     inline-size. That inline-size change is what the ResizeObserver in
-     reflow-tabs.js watches for, so without this a scrollbar toggling on
-     open would trigger a spurious recompute. Unsupported browsers just
-     keep the old auto-gutter behavior -- recomputeLayout()'s visible-id
-     comparison already guards against that case regardless. */
+  /* Reserves scrollbar space so a scrollbar appearing (e.g. the More menu
+     extending past this element's bottom edge) doesn't change the
+     measured content-box inline-size and trigger a spurious ResizeObserver
+     recompute. Without support, recomputeLayout()'s visible-id comparison
+     still guards against the same case. */
   scrollbar-gutter: stable;
   width: 100%;
-  /* Floor for the worst-case single-tab breakpoint below -- see that
-     comment for how this number was derived. */
+  /* Floor required by the worst-case single-tab breakpoint below. */
   min-width: 255px;
   max-width: 100%;
 
@@ -93,59 +86,45 @@ kbd {
   align-items: stretch;
   gap: 0.4rem;
   border-bottom: 1px solid var(--border);
-  /* Fallback/default: all tabs visible when no @container rule matches
-     (wide container). JS reads this custom property to know how many tabs
-     currently fit. */
+  /* Default when no @container rule matches: all tabs visible. JS reads
+     this property to determine how many tabs fit. */
   --visible-count: 8;
 }
 
 /* ---------- Container query breakpoints ----------
-   Written widest -> narrowest so the narrowest matching rule wins the
-   cascade. A container query only knows .tabs-container's own pixel
-   width -- it can't see how wide the specific tabs currently in view
-   actually are, and which tabs are visible changes at runtime (picking
-   an overflowed tab from the More menu promotes it into the last visible
-   slot, bumping something else out). Tuning each threshold against the
-   default tab order's width would fit *that* combination, then wrap onto
-   a second line for any width where a wider-labeled combination ends up
-   visible instead -- which is exactly the failure this component exists
-   to avoid.
+   Widest -> narrowest; the narrowest matching rule wins the cascade.
 
-   So instead each threshold is sized for the worst case: assuming the N
-   widest tab labels of all 8 are the ones showing, not just whichever N
-   happen to be first. That's a real, if pessimistic, upper bound -- any
-   actual combination of N visible tabs is never wider than the N widest
-   tabs overall, so sizing against it guarantees N tabs always fit,
-   regardless of which N they turn out to be. The trade-off is exactly
-   the one that was chosen deliberately over a JS pixel-measurement
-   rewrite: a container may show one fewer tab than the *current*
-   combination could actually fit, in exchange for a guarantee that
-   nothing ever wraps.
+   A container query only measures .tabs-container's pixel width, not the
+   width of the specific tabs currently shown -- and the visible set
+   changes at runtime (selecting an overflowed tab from the More menu
+   promotes it into the last visible slot, displacing another tab).
+   Thresholds tuned to the default tab order's width would fit only that
+   combination and wrap for any wider combination.
 
-   Each number is the sum of the N widest tab widths + the gaps between
+   Each threshold is instead sized for the worst case: the N widest tab
+   labels of all 8, not whichever N happen to be first. No combination of
+   N visible tabs is ever wider than the N widest tabs overall, so this
+   guarantees N tabs fit regardless of which N are shown. Cost: the
+   container may show one fewer tab than the current combination could
+   actually fit.
+
+   Each value is the sum of the N widest tab widths + the gaps between
    them + the gap before the More button + the More button's own width,
-   all measured from the rendered demo, rounded up for safety margin.
-   (integrations 112 / overview 95 / analytics 90 / settings 84 /
-   activity 79 / billing 70 / team 64 / files 58, tab gap 4, row gap
-   6.4, More button 77.) There's deliberately no --visible-count: 7 tier:
-   7 of the widest tabs plus the More button needs more room than all 8
-   tabs need with no button at all, so that tier can never be reachable
-   between the "6" and "8" thresholds -- 6 is the widest count that ever
-   makes sense to show alongside the button.
+   measured from the rendered demo and rounded up. (integrations 112 /
+   overview 95 / analytics 90 / settings 84 / activity 79 / billing 70 /
+   team 64 / files 58, tab gap 4, row gap 6.4, More button 77.) There is
+   no --visible-count: 7 tier: 7 of the widest tabs plus the More button
+   need more room than all 8 tabs need with no button, so that tier is
+   unreachable.
 
-   Each rule's max-width is NOT the requirement for the count it assigns
-   -- it's the requirement for the count ONE TIER WIDER. A max-width
-   rule stays in effect all the way down to the next rule's threshold,
-   not just at the exact boundary, so "--visible-count: 6" here has to
-   stay safe for 6 tabs across that entire span, all the way down to
-   where "--visible-count: 5" takes over. The only number that actually
-   guarantees that is the width the *5*-tab worst case needs -- once the
-   container gets any narrower than that, 5 has already taken over. So
-   each threshold below is keyed to the next-larger tab count's
-   requirement, not its own. The narrowest tier's worst case (a lone
-   "Integrations" tab + the More button) is, by the same logic, what
-   .tabs-container's min-width above is sized to guarantee fits, since
-   there's no narrower rule below it to hand off to. */
+   A max-width rule stays in effect down to the next rule's threshold,
+   not just at its own boundary, so each rule's max-width is the
+   requirement for the next tier UP, not its own -- the value on
+   --visible-count: 6 is what 6 of the widest tabs need, and marks the
+   point where 8 tabs stop fitting. .tabs-container's min-width above
+   covers the narrowest tier the same way, for its own worst case (a
+   lone "Integrations" tab + the More button), since there's no narrower
+   rule to hand off to. */
 @container tabs (max-width: 688px) {
   .tablist-row {
     --visible-count: 6;
@@ -180,9 +159,8 @@ kbd {
 .tablist {
   list-style: none;
   display: flex;
-  /* Safety net for the instant before JS's first recomputeLayout() runs;
-     JS then hides true overflow items outright rather than relying on
-     wrapping. */
+  /* Fallback before JS's first recomputeLayout() runs; JS then hides
+     overflow items instead of relying on wrapping. */
   flex-wrap: wrap;
   gap: 0.25rem;
   margin: 0;
