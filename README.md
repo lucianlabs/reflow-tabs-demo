@@ -12,7 +12,7 @@ A menu button sits at the end of the tablist. As tabs stop fitting, they're move
 
 ## Pros / Cons
 
-This is a common, and by many measures elegant, approach — it's the pattern most users already recognize from toolbars and app menus. But of the four proposed solutions it's also the most complex from an accessibility standpoint:
+This is a common and refined approach — it's the pattern most users already recognize from toolbars and app menus. But of the four proposed solutions it's also the most complex from an accessibility standpoint:
 
 - `button` is not an allowed child of an element with `role="tablist"` per the ARIA spec, so the menu button has to live outside the tablist itself (structurally adjacent to it, not inside it) rather than as a peer of the `tab` elements it's standing in for.
 - Making a `tab` element behave like a menu button — as an alternative structure might attempt, to keep it "inside" the tablist — violates the intent of the `tab` role and is confusing for assistive technology users, since it would announce as a tab while actually behaving like a menu trigger.
@@ -31,10 +31,14 @@ This demo takes the structurally-conforming route rather than the confusing one:
   --visible-count: 8; /* default: everything fits */
 }
 @container tabs (max-width: 705px) {
-  .tablist-row { --visible-count: 6; }
+  .tablist-row {
+    --visible-count: 6;
+  }
 }
 @container tabs (max-width: 585px) {
-  .tablist-row { --visible-count: 5; }
+  .tablist-row {
+    --visible-count: 5;
+  }
 }
 /* …down to --visible-count: 1 at the narrowest breakpoint */
 ```
@@ -45,7 +49,7 @@ Doing the size-to-tab-count mapping in CSS, rather than in JavaScript, means the
 
 ### Reacting to size changes: `ResizeObserver`
 
-JavaScript still needs to know *when* to re-read `--visible-count` and *act* on it — CSS can't move DOM nodes into a menu on its own. [`reflow-tabs.js`](reflow-tabs.js) watches `.tabs-container` with a `ResizeObserver`:
+JavaScript still needs to know _when_ to re-read `--visible-count` and _act_ on it — CSS can't move DOM nodes into a menu on its own. [`reflow-tabs.js`](reflow-tabs.js) watches `.tabs-container` with a `ResizeObserver`:
 
 ```js
 const ro = new ResizeObserver(() =>
@@ -61,7 +65,7 @@ Whenever the container's box size changes — the user drags the resize handle, 
 `recomputeLayout()` does the actual work of deciding which tabs are visible and which are in the menu:
 
 1. **Read the target count.** `getVisibleCount()` reads the computed `--visible-count` value off `.tablistRow` and clamps it to the real number of tabs.
-2. **Keep the active tab visible.** `promoteToLastVisibleSlot(activeId, visibleCount)` checks whether the currently-selected tab would fall outside the visible range at this width. If it would, it's moved to the last visible slot, and whatever tab was previously there is bumped into the overflow menu instead. This is what guarantees a user is never looking at a blank tablist because their selection silently scrolled out of view — it also covers the case where a tab is selected while visible and *then* the container shrinks past it.
+2. **Keep the active tab visible.** `promoteToLastVisibleSlot(activeId, visibleCount)` checks whether the currently-selected tab would fall outside the visible range at this width. If it would, it's moved to the last visible slot, and whatever tab was previously there is bumped into the overflow menu instead. This is what guarantees a user is never looking at a blank tablist because their selection silently scrolled out of view — it also covers the case where a tab is selected while visible and _then_ the container shrinks past it.
 3. **Diff before touching the DOM.** The resulting visible-tab-id sequence is compared against the sequence already applied. `ResizeObserver` can fire again for a size that's already been handled (settling can take a couple of frames), so this comparison keeps a redundant call from doing any DOM work at all — which also sidesteps a real Chromium quirk where re-appending an already-correctly-positioned node still blurs a focused descendant.
 4. **Apply it.** Visible tab `<li>` elements are reordered in the DOM to match the working order, non-visible ones get the `hidden` attribute, and the overflow set is handed to `renderMenu()` to rebuild the `<ul role="menu">` contents (listed in the tabs' original order, not the working order, so the menu itself stays predictable rather than reshuffling based on what was most recently promoted).
 5. **Update the live region.** A visually-hidden-adjacent status line (`aria-live="polite"`) announces how many of the tabs are currently showing, so screen reader users get the same "N of M tabs, rest in More" information sighted users get for free from the menu button simply existing.
@@ -70,29 +74,29 @@ Whenever the container's box size changes — the user drags the resize handle, 
 
 Because the tabs and the overflow menu are semantically distinct widgets, the JS implements two APG patterns side by side rather than inventing a hybrid:
 
-- **[Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)**, with automatic activation — arrow keys move focus and activate the tab in the same step, `Home`/`End` jump to the first/last *visible* tab, and `aria-selected`/roving `tabindex` are kept in sync on every activation.
+- **[Tabs](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)**, with automatic activation — arrow keys move focus and activate the tab in the same step, `Home`/`End` jump to the first/last _visible_ tab, and `aria-selected`/roving `tabindex` are kept in sync on every activation.
 - **[Menu Button](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/)**, for the "More" dropdown — `aria-haspopup`/`aria-expanded` on the button, a roving-tabindex `role="menu"`/`role="menuitem"` list, arrow key/`Home`/`End`/`Escape`/typeahead navigation, and click-outside/focus-out closing.
 
 Choosing a tab from the menu (`chooseFromMenu`) calls the same `setActiveTab` + `recomputeLayout` path a direct click would, so the newly-chosen tab gets promoted into the last visible slot exactly as described above, and focus moves to it afterward — closing the loop between "picked from the overflow menu" and "now behaves like any other visible tab."
 
 ## Keyboard shortcuts
 
-| Key(s) | Action |
-| --- | --- |
-| <kbd>←</kbd> <kbd>→</kbd> | Move between visible tabs |
-| <kbd>Home</kbd> / <kbd>End</kbd> | Jump to the first / last visible tab |
-| <kbd>↑</kbd> / <kbd>↓</kbd> on **More** | Open the overflow menu |
-| <kbd>↑</kbd> / <kbd>↓</kbd> in the menu | Move between overflow items |
-| <kbd>Enter</kbd> | Choose the focused menu item |
-| <kbd>Esc</kbd> | Close the menu |
+| Key(s)                                  | Action                               |
+| --------------------------------------- | ------------------------------------ |
+| <kbd>←</kbd> <kbd>→</kbd>               | Move between visible tabs            |
+| <kbd>Home</kbd> / <kbd>End</kbd>        | Jump to the first / last visible tab |
+| <kbd>↑</kbd> / <kbd>↓</kbd> on **More** | Open the overflow menu               |
+| <kbd>↑</kbd> / <kbd>↓</kbd> in the menu | Move between overflow items          |
+| <kbd>Enter</kbd>                        | Choose the focused menu item         |
+| <kbd>Esc</kbd>                          | Close the menu                       |
 
 ## Files
 
-| File | Role |
-| --- | --- |
-| [`reflow-tabs.html`](reflow-tabs.html) | The tablist/panel markup — a complete, semantic APG tablist with no JS-dependent structure |
-| [`reflow-tabs.css`](reflow-tabs.css) | Visual styling, the container-query breakpoints, and `--visible-count` |
-| [`reflow-tabs.js`](reflow-tabs.js) | `ResizeObserver`-driven reflow calculation, tab activation, and the More menu's Menu Button behavior |
+| File                                   | Role                                                                                                 |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`reflow-tabs.html`](reflow-tabs.html) | The tablist/panel markup — a complete, semantic APG tablist with no JS-dependent structure           |
+| [`reflow-tabs.css`](reflow-tabs.css)   | Visual styling, the container-query breakpoints, and `--visible-count`                               |
+| [`reflow-tabs.js`](reflow-tabs.js)     | `ResizeObserver`-driven reflow calculation, tab activation, and the More menu's Menu Button behavior |
 
 ## Browser support
 
