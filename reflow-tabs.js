@@ -4,6 +4,10 @@
   const widgetRoot = document.querySelector('[data-js="tabs"]');
   if (!widgetRoot) return;
 
+  const DECIMAL_RADIX = 10;
+  const MIN_VISIBLE_COUNT = 1;
+  const TYPEAHEAD_RESET_MS = 600;
+
   const container = document.getElementById("tabsContainer");
   const tablistRow = document.getElementById("tablistRow");
   const tablistEl = document.getElementById("tablist");
@@ -132,9 +136,12 @@
   function getVisibleCount() {
     const raw =
       getComputedStyle(tablistRow).getPropertyValue("--visible-count");
-    const n = parseInt(raw, 10);
-    return Number.isFinite(n) && n > 0
-      ? Math.min(n, tabsData.length)
+    const parsedCount = Number.parseInt(raw, DECIMAL_RADIX);
+    const hasValidVisibleCount =
+      Number.isFinite(parsedCount) && parsedCount >= MIN_VISIBLE_COUNT;
+
+    return hasValidVisibleCount
+      ? Math.min(parsedCount, tabsData.length)
       : tabsData.length;
   }
 
@@ -318,7 +325,7 @@
           clearTimeout(typeaheadTimer);
           typeaheadTimer = setTimeout(() => {
             typeaheadBuffer = "";
-          }, 600);
+          }, TYPEAHEAD_RESET_MS);
           const items = menuItems();
           const start = items.indexOf(document.activeElement) + 1;
           for (let i = 0; i < items.length; i++) {
